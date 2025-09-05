@@ -1,0 +1,244 @@
+import { useState, useEffect } from 'react';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners } from '@dnd-kit/core';
+import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
+import { supabase } from '@/integrations/supabase/client';
+import { Column as ColumnType, Idea } from '@/types';
+import { KanbanColumn } from './KanbanColumn';
+import { IdeaCard } from './IdeaCard';
+import { CreateIdeaModal } from './CreateIdeaModal';
+import { IdeaDetailModal } from './IdeaDetailModal';
+import { Header } from './Header';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { Plus, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+export function KanbanBoard() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [columns, setColumns] = useState<ColumnType[]>([]);
+  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedColumn, setSelectedColumn] = useState<string | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
+  const [draggedIdea, setDraggedIdea] = useState<Idea | null>(null);
+
+  useEffect(() => {
+    fetchData();
+    setupRealtime();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      // Fetch columns
+      const { data: columnsData, error: columnsError } = await supabase
+        .from('columns')
+        .select('*')
+        .order('position');
+
+      if (columnsError) throw columnsError;
+      setColumns(columnsData || []);
+
+      // Fetch ideas with related data
+      const { data: ideasData, error: ideasError } = await supabase
+        .from('ideas')
+        .select(`
+          *,
+          creator:profiles!creator_id(*),
+          votes(id, user_id, idea_id, created_at),
+          comments(id, idea_id, created_at)
+        `)
+        .order('position_in_column');
+
+      if (ideasError) throw ideasError;
+
+      // Process ideas to add computed fields
+      const processedIdeas = (ideasData || []).map((idea: any) => ({
+        ...idea,
+        vote_count: idea.votes?.length || 0,
+        comment_count: idea.comments?.length || 0,
+        user_has_voted: idea.votes?.some((vote: any) => vote.user_id === user?.id) || false
+      }));
+
+      setIdeas(processedIdeas);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar os dados do board.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const setupRealtime = () => {
+    const channel = supabase
+      .channel('kanban-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'ideas'
+      }, () => {
+        fetchData();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'votes'
+      }, () => {
+        fetchData();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'comments'
+      }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const idea = ideas.find(i => i.id === event.active.id);
+    setDraggedIdea(idea || null);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setDraggedIdea(null);
+
+    if (!over) return;
+
+    const ideaId = active.id as string;
+    const targetColumnId = over.id as string;
+
+    // Find the idea being moved
+    const idea = ideas.find(i => i.id === ideaId);
+    if (!idea) return;
+
+    // If dropping in the same column, no change needed
+    if (idea.column_id === targetColumnId) return;
+
+    try {
+      // Calculate new position (append to end of target column)
+      const targetColumnIdeas = ideas.filter(i => i.column_id === targetColumnId);
+      const newPosition = targetColumnIdeas.length;
+
+      // Update the idea in the database
+      const { error } = await supabase
+        .from('ideas')
+        .update({
+          column_id: targetColumnId,
+          position_in_column: newPosition
+        })
+        .eq('id', ideaId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Ideia movida",
+        description: "A ideia foi movida com sucesso!"
+      });
+    } catch (error) {
+      console.error('Error moving idea:', error);
+      toast({
+        title: "Erro ao mover ideia",
+        description: "Não foi possível mover a ideia.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const filteredIdeas = ideas.filter(idea => {
+    const matchesSearch = !searchQuery || 
+      idea.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (idea.description && idea.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const matchesColumn = !selectedColumn || idea.column_id === selectedColumn;
+    
+    return matchesSearch && matchesColumn;
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header
+        columns={columns}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedColumn={selectedColumn}
+        setSelectedColumn={setSelectedColumn}
+      />
+      
+      <main className="container mx-auto px-4 py-6">
+        <DndContext
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex gap-6 overflow-x-auto pb-6">
+            <SortableContext 
+              items={columns.map(col => col.id)} 
+              strategy={horizontalListSortingStrategy}
+            >
+              {columns.map(column => (
+                <KanbanColumn
+                  key={column.id}
+                  column={column}
+                  ideas={filteredIdeas.filter(idea => idea.column_id === column.id)}
+                  onIdeaClick={setSelectedIdea}
+                />
+              ))}
+            </SortableContext>
+          </div>
+          
+          <DragOverlay>
+            {draggedIdea && <IdeaCard idea={draggedIdea} onClick={() => {}} />}
+          </DragOverlay>
+        </DndContext>
+      </main>
+
+      {/* Floating Action Button */}
+      <Button
+        onClick={() => setCreateModalOpen(true)}
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
+        style={{
+          background: 'var(--gradient-primary)',
+          boxShadow: 'var(--shadow-kanban)'
+        }}
+      >
+        <Plus className="h-6 w-6" />
+      </Button>
+
+      {/* Modals */}
+      <CreateIdeaModal
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+        columns={columns}
+      />
+      
+      {selectedIdea && (
+        <IdeaDetailModal
+          idea={selectedIdea}
+          onClose={() => setSelectedIdea(null)}
+          onUpdate={fetchData}
+        />
+      )}
+    </div>
+  );
+}

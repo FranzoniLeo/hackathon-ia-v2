@@ -2,7 +2,11 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
 
-const Index = () => {
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -17,7 +21,5 @@ const Index = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  return <Navigate to="/" replace />;
-};
-
-export default Index;
+  return <>{children}</>;
+}
