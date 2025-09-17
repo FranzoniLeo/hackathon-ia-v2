@@ -24,14 +24,21 @@ export function KanbanBoard() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
   const [draggedIdea, setDraggedIdea] = useState<Idea | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     fetchData();
     setupRealtime();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (isRefresh = false) => {
     try {
+      if (isRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+
       // Fetch columns
       const { data: columnsData, error: columnsError } = await supabase
         .from('columns')
@@ -63,6 +70,13 @@ export function KanbanBoard() {
       }));
 
       setIdeas(processedIdeas);
+
+      if (isRefresh) {
+        toast({
+          title: "Board atualizado",
+          description: "Os dados foram atualizados com sucesso!",
+        });
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       toast({
@@ -72,7 +86,12 @@ export function KanbanBoard() {
       });
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
+  };
+
+  const refreshBoard = async () => {
+    await fetchData(true);
   };
 
   const setupRealtime = () => {
@@ -115,22 +134,64 @@ export function KanbanBoard() {
     const { active, over } = event;
     setDraggedIdea(null);
 
-    if (!over) return;
+    if (!over) {
+      console.log('No drop target found');
+      return;
+    }
 
     const ideaId = active.id as string;
-    const targetColumnId = over.id as string;
-
+    
     // Find the idea being moved
     const idea = ideas.find(i => i.id === ideaId);
-    if (!idea) return;
+    if (!idea) {
+      console.error('Idea not found:', ideaId);
+      return;
+    }
+
+    // Determine target column ID
+    let targetColumnId: string;
+    
+    // Check if we're dropping on a column directly
+    const isDroppingOnColumn = columns.some(col => col.id === over.id);
+    
+    if (isDroppingOnColumn) {
+      // Dropping directly on column
+      targetColumnId = over.id as string;
+    } else {
+      // Dropping on another card - find which column that card belongs to
+      const targetIdea = ideas.find(i => i.id === over.id);
+      if (!targetIdea) {
+        console.error('Target idea not found:', over.id);
+        return;
+      }
+      targetColumnId = targetIdea.column_id;
+    }
+
+    console.log('Moving idea:', {
+      ideaId,
+      fromColumn: idea.column_id,
+      toColumn: targetColumnId,
+      isDroppingOnColumn,
+      overId: over.id
+    });
 
     // If dropping in the same column, no change needed
-    if (idea.column_id === targetColumnId) return;
+    if (idea.column_id === targetColumnId) {
+      console.log('Same column, no change needed');
+      return;
+    }
 
     try {
       // Calculate new position (append to end of target column)
       const targetColumnIdeas = ideas.filter(i => i.column_id === targetColumnId);
       const newPosition = targetColumnIdeas.length;
+
+      console.log('Updating idea position:', {
+        ideaId,
+        newColumnId: targetColumnId,
+        newPosition,
+        targetColumnIdeasCount: targetColumnIdeas.length
+      });
 
       // Update the idea in the database
       const { error } = await supabase
@@ -141,8 +202,12 @@ export function KanbanBoard() {
         })
         .eq('id', ideaId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
 
+      console.log('Idea moved successfully');
       toast({
         title: "Ideia movida",
         description: "A ideia foi movida com sucesso!"
@@ -151,7 +216,7 @@ export function KanbanBoard() {
       console.error('Error moving idea:', error);
       toast({
         title: "Erro ao mover ideia",
-        description: "Não foi possível mover a ideia.",
+        description: "Não foi possível mover a ideia. Tente novamente.",
         variant: "destructive"
       });
     }
@@ -183,6 +248,8 @@ export function KanbanBoard() {
         setSearchQuery={setSearchQuery}
         selectedColumn={selectedColumn}
         setSelectedColumn={setSelectedColumn}
+        onRefresh={refreshBoard}
+        isRefreshing={isRefreshing}
       />
       
       <main className="container mx-auto px-4 py-6">

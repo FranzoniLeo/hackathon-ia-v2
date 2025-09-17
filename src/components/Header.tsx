@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Filter, LogOut, User } from 'lucide-react';
+import { Search, Filter, LogOut, User, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,6 +13,8 @@ interface HeaderProps {
   setSearchQuery: (query: string) => void;
   selectedColumn: string | null;
   setSelectedColumn: (columnId: string | null) => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 export function Header({ 
@@ -20,7 +22,9 @@ export function Header({
   searchQuery, 
   setSearchQuery, 
   selectedColumn, 
-  setSelectedColumn 
+  setSelectedColumn,
+  onRefresh,
+  isRefreshing = false
 }: HeaderProps) {
   const { signOut } = useAuth();
   const { profile } = useProfile();
@@ -78,6 +82,18 @@ export function Header({
               ))}
             </SelectContent>
           </Select>
+
+          {/* Refresh Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="hover:bg-primary/10 hover:text-primary hover:border-primary/20"
+            title="Atualizar dados do board"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
         </div>
 
         {/* User Actions */}
