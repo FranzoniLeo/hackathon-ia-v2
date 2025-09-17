@@ -1,73 +1,62 @@
-# Welcome to your Lovable project
+# 📋 Kanban de Ideias - Hackathon IA v2
 
-## Project info
+## 🎯 Sobre o Projeto
 
-**URL**: https://lovable.dev/projects/0774f2c3-8602-460f-a36f-3d87842b36c9
+Este projeto foi desenvolvido durante um Hackathon com foco em Inteligência Artificial. Trata-se de um **Kanban de Ideias** interativo e colaborativo, onde usuários podem propor ideias, votar, comentar e mover cards entre diferentes colunas de status.
 
-## How can I edit this code?
+O objetivo é criar uma plataforma onde equipes podem gerenciar suas ideias de forma visual e dinâmica, com atualizações em tempo real e uma interface moderna e intuitiva.
 
-There are several ways of editing your application.
+## ✨ Funcionalidades Principais
 
-**Use Lovable**
+- **Gestão de Cards**: Criação, edição e movimentação de cards entre colunas
+- **Sistema de Votação**: Cada usuário pode votar uma vez por card (sistema de toggle)
+- **Comentários**: Sistema completo de CRUD para comentários em cada card
+- **Busca Avançada**: Pesquisa por título, criador ou descrição
+- **Filtros**: Filtragem por coluna específica
+- **Drag & Drop**: Interface intuitiva de arrastar e soltar
+- **Tempo Real**: Atualizações instantâneas para todos os usuários conectados
+- **Multilíngue**: Suporte para Português (PT-BR) e Inglês (EN)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0774f2c3-8602-460f-a36f-3d87842b36c9) and start prompting.
+## 🛠️ Stack Tecnológica
 
-Changes made via Lovable will be committed automatically to this repo.
+### Frontend
+- **Next.js** - Framework React para aplicações web
+- **TypeScript** - Tipagem estática para JavaScript
+- **Tailwind CSS** - Framework CSS utilitário
+- **shadcn/ui** - Componentes de interface moderna
+- **dnd-kit** - Biblioteca para drag-and-drop
+- **TanStack Query** - Gerenciamento de estado e cache
 
-**Use your preferred IDE**
+### Backend
+- **API Routes/Server Actions** - Backend integrado ao Next.js
+- **Prisma** - ORM para banco de dados
+- **PostgreSQL** ou **Supabase** - Banco de dados
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Serviços
+- **Supabase Auth** - Sistema de autenticação
+- **Supabase Realtime** - Atualizações em tempo real
+- **WebSockets** - Comunicação bidirecional
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🔐 Regras de Negócio
 
-Follow these steps:
+- **Visualização**: Todos os usuários autenticados podem ver o board
+- **Criação**: Qualquer usuário pode criar cards e comentar
+- **Edição**: Apenas o criador pode editar título/descrição de um card
+- **Comentários**: Apenas o autor pode editar/excluir seus próprios comentários
+- **Movimentação**: Qualquer usuário pode mover cards entre colunas
+- **Votação**: Um voto único por card/usuário (sistema de toggle)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🏆 Critérios de Avaliação (Hackathon)
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. **Engenharia de Prompt**: Qualidade da base de código gerada
+2. **Funcionalidade**: Qualidade e completude do produto final
+3. **Criatividade**: Implementação de funcionalidades inovadoras
+4. **Organização**: Estruturação e organização do projeto
 
-# Step 3: Install the necessary dependencies.
-npm i
+---
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## 📚 Documentação
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/0774f2c3-8602-460f-a36f-3d87842b36c9) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- 📄 **Informações técnicas**: [TECHNICAL.md](./TECHNICAL.md) - Detalhes sobre desenvolvimento e deploy
+- 📋 **Contexto do projeto**: [CONTEXT.md](./CONTEXT.md) - Especificações técnicas e funcionais  
+- 📁 **Documentação completa**: [docs/](./docs/) - Prompt inicial, instruções do hackathon e mais
