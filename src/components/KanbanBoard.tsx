@@ -295,7 +295,7 @@ export function KanbanBoard() {
       {/* Floating Action Button */}
       <Button
         onClick={() => setCreateModalOpen(true)}
-        className="fixed bottom-2 right-6 h-14 w-14 rounded-full shadow-lg z-20"
+        className="fixed bottom-12 right-10 h-14 w-14 rounded-full shadow-lg z-20"
         style={{
           background: 'var(--gradient-primary)',
           boxShadow: 'var(--shadow-kanban)'

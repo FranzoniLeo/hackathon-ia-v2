@@ -120,32 +120,51 @@ All colors MUST be HSL.
   .kanban-scroll-content {
     height: 100%;
     overflow-x: auto;
-    overflow-y: hidden;
-    /* Esconder a scrollbar padrão */
+    overflow-y: scroll; /* Forçar scroll vertical para usar scroll customizado via JS */
+    /* Esconder todas as scrollbars nativas */
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
   }
   
   .kanban-scroll-content::-webkit-scrollbar {
-    display: none; /* Chrome/Safari/Opera */
+    display: none; /* Chrome/Safari/Opera - esconder todas as scrollbars */
   }
   
   .kanban-scroll-footer {
     position: fixed;
-    bottom: 8px;
-    left: 16px;
-    right: 96px; /* Espaço para o botão + (14*4 + 24px de margem) */
+    bottom: 24px; /* Posicionar abaixo do botão + */
+    left: 0;
+    right: 25px; /* Ocupar toda a largura da tela */
     height: 16px;
     overflow-x: auto;
     overflow-y: hidden;
     z-index: 10;
     background: rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+    border-radius: 0; /* Remover border-radius para ocupar toda a tela */
     backdrop-filter: blur(4px);
   }
   
   .kanban-scroll-spacer {
     height: 100%;
     /* A largura será definida dinamicamente pelo JavaScript */
+  }
+  
+  .kanban-scroll-vertical {
+    position: fixed;
+    top: 60px; /* Começar mais próximo do topo */
+    right: 8px;
+    bottom: 48px; /* Terminar antes da barra horizontal */
+    width: 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    backdrop-filter: blur(4px);
+  }
+  
+  .kanban-scroll-vertical-spacer {
+    width: 100%;
+    /* A altura será definida dinamicamente pelo JavaScript */
   }
 }
