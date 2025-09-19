@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { formatDistanceToNow } from 'date-fns';
@@ -7,14 +8,20 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Heart, MessageCircle, Edit3 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface IdeaCardProps {
   idea: Idea;
   onClick: () => void;
+  onUpdate?: () => void;
+  isDragEnabled?: boolean;
 }
 
-export function IdeaCard({ idea, onClick }: IdeaCardProps) {
+export function IdeaCard({ idea, onClick, onUpdate, isDragEnabled = true }: IdeaCardProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [isLiking, setIsLiking] = useState(false);
   const {
     attributes,
     listeners,
@@ -31,15 +38,69 @@ export function IdeaCard({ idea, onClick }: IdeaCardProps) {
 
   const isCreator = user?.id === idea.creator_id;
 
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!user || isLiking) return;
+
+    setIsLiking(true);
+    try {
+      if (idea.user_has_voted) {
+        // Remove vote
+        const { error } = await supabase
+          .from('votes')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('idea_id', idea.id);
+
+        if (error) throw error;
+        
+        toast({
+          title: "Voto removido",
+          description: "Seu voto foi removido da ideia."
+        });
+      } else {
+        // Add vote
+        const { error } = await supabase
+          .from('votes')
+          .insert({
+            user_id: user.id,
+            idea_id: idea.id
+          });
+
+        if (error) throw error;
+        
+        toast({
+          title: "Voto adicionado",
+          description: "Você votou nesta ideia!"
+        });
+      }
+
+      // Refresh data
+      if (onUpdate) {
+        onUpdate();
+      }
+    } catch (error) {
+      console.error('Error handling vote:', error);
+      toast({
+        title: "Erro ao votar",
+        description: "Não foi possível processar seu voto.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLiking(false);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
+      {...(isDragEnabled ? attributes : {})}
+      {...(isDragEnabled ? listeners : {})}
       className={`cursor-pointer transition-all duration-200 ${
-        isDragging ? 'opacity-50 scale-95' : 'hover:scale-105'
-      }`}
+        isDragEnabled && isDragging ? 'opacity-50 scale-95' : 'hover:scale-105'
+      } ${!isDragEnabled ? 'cursor-default' : ''}`}
       onClick={onClick}
     >
       <div 
@@ -102,10 +163,8 @@ export function IdeaCard({ idea, onClick }: IdeaCardProps) {
                   ? 'text-red-500 hover:text-red-600' 
                   : 'text-muted-foreground hover:text-red-500'
               }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                // Will be handled in the modal
-              }}
+              onClick={handleLike}
+              disabled={isLiking}
             >
               <Heart className={`h-3 w-3 mr-1 ${idea.user_has_voted ? 'fill-current' : ''}`} />
               {idea.vote_count || 0}
