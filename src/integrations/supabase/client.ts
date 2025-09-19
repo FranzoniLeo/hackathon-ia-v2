@@ -2,11 +2,25 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://sjrsxbnmjyuwrxycqhut.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqcnN4Ym5tanl1d3J4eWNxaHV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNDAyODcsImV4cCI6MjA3MjYxNjI4N30.sKdkgR67dhFJa9KnPKBg5W6noX7BPpyez7JmIbCB7ac";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Debug: verificar se as variáveis estão sendo carregadas
+console.log('🔍 Debug Supabase Config:');
+console.log('SUPABASE_URL:', SUPABASE_URL);
+console.log('SUPABASE_PUBLISHABLE_KEY:', SUPABASE_PUBLISHABLE_KEY ? '✅ Loaded' : '❌ Missing');
+console.log('All env vars:', import.meta.env);
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
+
+// Validação das variáveis de ambiente
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  console.error('❌ Erro: Variáveis de ambiente do Supabase não encontradas!');
+  console.error('SUPABASE_URL:', SUPABASE_URL);
+  console.error('SUPABASE_PUBLISHABLE_KEY:', SUPABASE_PUBLISHABLE_KEY ? 'Existe' : 'Não existe');
+  throw new Error('Configuração do Supabase incompleta. Verifique as variáveis de ambiente.');
+}
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {

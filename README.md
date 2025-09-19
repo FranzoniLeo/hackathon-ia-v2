@@ -55,8 +55,15 @@ O objetivo é criar uma plataforma onde equipes podem gerenciar suas ideias de f
 
 ---
 
+## 🤖 Desenvolvimento com IA
+
+Este projeto foi otimizado para desenvolvimento assistido por IA (Cursor). O arquivo `.cursorrules` e `CONTEXT.md` garantem que a IA sempre tenha o contexto completo do projeto.
+
+---
+
 ## 📚 Documentação
 
+- 🚀 **Setup e instalação**: [docs/SETUP.md](./docs/SETUP.md) - Guia completo para executar o projeto
 - 📄 **Informações técnicas**: [TECHNICAL.md](./TECHNICAL.md) - Detalhes sobre desenvolvimento e deploy
 - 📋 **Contexto do projeto**: [CONTEXT.md](./CONTEXT.md) - Especificações técnicas e funcionais  
 - 📁 **Documentação completa**: [docs/](./docs/) - Prompt inicial, instruções do hackathon e mais

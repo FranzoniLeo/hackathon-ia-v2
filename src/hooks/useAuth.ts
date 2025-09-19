@@ -11,6 +11,7 @@ export function useAuth() {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('🔐 Auth State Change:', event, session?.user?.email || 'no user');
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -19,6 +20,7 @@ export function useAuth() {
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🔐 Initial Session:', session?.user?.email || 'no session');
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -56,6 +58,16 @@ export function useAuth() {
     return { error };
   };
 
+  const resetPassword = async (email: string) => {
+    // URL específica para reset de senha
+    const redirectUrl = `${window.location.origin}/reset-password`;
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl
+    });
+    return { error };
+  };
+
   return {
     user,
     session,
@@ -63,5 +75,6 @@ export function useAuth() {
     signIn,
     signUp,
     signOut,
+    resetPassword,
   };
 }

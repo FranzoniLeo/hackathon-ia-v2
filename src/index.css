@@ -109,3 +109,43 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Barra horizontal simples no footer */
+@layer components {
+  .kanban-scroll-wrapper {
+    height: calc(100vh - 140px); /* Altura ajustada para header */
+    overflow: hidden;
+  }
+  
+  .kanban-scroll-content {
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    /* Esconder a scrollbar padrão */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+  
+  .kanban-scroll-content::-webkit-scrollbar {
+    display: none; /* Chrome/Safari/Opera */
+  }
+  
+  .kanban-scroll-footer {
+    position: fixed;
+    bottom: 8px;
+    left: 16px;
+    right: 96px; /* Espaço para o botão + (14*4 + 24px de margem) */
+    height: 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    backdrop-filter: blur(4px);
+  }
+  
+  .kanban-scroll-spacer {
+    height: 100%;
+    /* A largura será definida dinamicamente pelo JavaScript */
+  }
+}
