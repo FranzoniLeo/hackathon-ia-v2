@@ -1,0 +1,33 @@
+# Regras do Cursor para o Projeto Kanban
+
+## Contexto do Projeto
+Sempre consulte o arquivo CONTEXT.md na raiz do projeto para entender:
+- Objetivo do projeto (Kanban de Ideias)
+- Stack tecnológica (Next.js, TypeScript, Tailwind, shadcn/ui, dnd-kit, TanStack Query, Supabase)
+- Regras de negócio e permissões
+- Funcionalidades obrigatórias
+- Status atual do desenvolvimento
+
+## Diretrizes de Desenvolvimento
+- Use TypeScript com tipagem forte
+- Siga os padrões do shadcn/ui para componentes
+- Implemente funcionalidades com foco em tempo real (Supabase)
+- Mantenha suporte a i18n (PT-BR e EN)
+- Priorize a experiência drag-and-drop com dnd-kit
+
+## Estrutura de Permissões
+- Usuários autenticados: ver board, criar cards, comentar, votar, mover cards
+- Criador do card: editar título/descrição
+- Autor do comentário: editar/excluir próprio comentário
+- Voto único por card/usuário (toggle)
+
+## Funcionalidades Prioritárias
+1. Sistema de autenticação (Supabase Auth)
+2. CRUD de cards com drag-and-drop
+3. Sistema de votos
+4. Sistema de comentários
+5. Busca e filtros
+6. Atualizações em tempo real
+7. Interface multilíngue
+
+Sempre consulte CONTEXT.md antes de implementar qualquer funcionalidade.

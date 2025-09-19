@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, closestCorners } from '@dnd-kit/core';
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { supabase } from '@/integrations/supabase/client';
@@ -8,6 +8,7 @@ import { IdeaCard } from './IdeaCard';
 import { CreateIdeaModal } from './CreateIdeaModal';
 import { IdeaDetailModal } from './IdeaDetailModal';
 import { Header } from './Header';
+import { ScrollSyncFooter } from './ScrollSyncFooter';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { Plus, Loader2 } from 'lucide-react';
@@ -16,6 +17,7 @@ import { Button } from '@/components/ui/button';
 export function KanbanBoard() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const contentRef = useRef<HTMLDivElement>(null);
   const [columns, setColumns] = useState<ColumnType[]>([]);
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
@@ -252,38 +254,48 @@ export function KanbanBoard() {
         isRefreshing={isRefreshing}
       />
       
-      <main className="container mx-auto px-4 py-6">
-        <DndContext
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <div className="flex gap-6 overflow-x-auto pb-6">
-            <SortableContext 
-              items={columns.map(col => col.id)} 
-              strategy={horizontalListSortingStrategy}
+      <div className="kanban-scroll-wrapper">
+        <main className="container mx-auto px-4 py-6 h-full">
+          <DndContext
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div 
+              ref={contentRef}
+              className="kanban-scroll-content"
             >
-              {columns.map(column => (
-                <KanbanColumn
-                  key={column.id}
-                  column={column}
-                  ideas={filteredIdeas.filter(idea => idea.column_id === column.id)}
-                  onIdeaClick={setSelectedIdea}
-                />
-              ))}
-            </SortableContext>
-          </div>
-          
-          <DragOverlay>
-            {draggedIdea && <IdeaCard idea={draggedIdea} onClick={() => {}} />}
-          </DragOverlay>
-        </DndContext>
-      </main>
+              <div className="flex gap-6 min-w-max py-6">
+                <SortableContext 
+                  items={columns.map(col => col.id)} 
+                  strategy={horizontalListSortingStrategy}
+                >
+                  {columns.map(column => (
+                    <KanbanColumn
+                      key={column.id}
+                      column={column}
+                      ideas={filteredIdeas.filter(idea => idea.column_id === column.id)}
+                      onIdeaClick={setSelectedIdea}
+                    />
+                  ))}
+                </SortableContext>
+              </div>
+            </div>
+            
+            <DragOverlay>
+              {draggedIdea && <IdeaCard idea={draggedIdea} onClick={() => {}} />}
+            </DragOverlay>
+          </DndContext>
+        </main>
+      </div>
+
+      {/* Barra de scroll horizontal no footer */}
+      <ScrollSyncFooter contentRef={contentRef} />
 
       {/* Floating Action Button */}
       <Button
         onClick={() => setCreateModalOpen(true)}
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg"
+        className="fixed bottom-2 right-6 h-14 w-14 rounded-full shadow-lg z-20"
         style={{
           background: 'var(--gradient-primary)',
           boxShadow: 'var(--shadow-kanban)'

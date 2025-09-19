@@ -19,6 +19,14 @@ Instruções oficiais e regras do BIX IA Hackathon, incluindo:
 - Contexto e objetivos do desafio
 - Informações sobre o tema "Kanban de Ideias"
 
+### [`SETUP.md`](./SETUP.md)
+Guia completo de instalação e configuração do projeto, incluindo:
+- Pré-requisitos e dependências necessárias
+- Instruções passo-a-passo para configuração do ambiente
+- Configuração do Supabase e variáveis de ambiente
+- Scripts disponíveis e comandos de execução
+- Troubleshooting comum e soluções
+
 ## 🔗 Outros Documentos Importantes
 
 - [`../CONTEXT.md`](../CONTEXT.md) - Contexto técnico e funcional do projeto

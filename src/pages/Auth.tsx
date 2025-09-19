@@ -1,19 +1,59 @@
-import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ForgotPasswordModal } from '@/components/ForgotPasswordModal';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
+// CRITICAL: Intercept password reset BEFORE React renders
+const isPasswordResetFromUrl = (() => {
+  console.log('🚨 PRE-REACT EXECUTION - Auth.tsx loading...');
+  
+  if (typeof window === 'undefined') {
+    console.log('❌ Window undefined (SSR)');
+    return false;
+  }
+  
+  const currentUrl = window.location.href;
+  const urlParams = new URLSearchParams(window.location.search);
+  const type = urlParams.get('type');
+  const accessToken = urlParams.get('access_token');
+  const refreshToken = urlParams.get('refresh_token');
+  
+  console.log('🚨 PRE-REACT Password Reset Check:');
+  console.log('📍 Current URL:', currentUrl);
+  console.log('🔍 Type param:', type);
+  console.log('🎫 Access Token:', accessToken ? 'Present' : 'Missing');
+  console.log('🎫 Refresh Token:', refreshToken ? 'Present' : 'Missing');
+  console.log('📋 All params:', Object.fromEntries(urlParams.entries()));
+  
+  if (type === 'recovery') {
+    console.log('✅ Recovery type detected - Auth.tsx will not interfere');
+    // Don't clean URL here - let ResetPasswordForm handle it
+    return false; // Let the normal routing handle /reset-password
+  } else {
+    console.log('❌ Not a recovery request - proceeding normally');
+  }
+  
+  return false;
+})();
+
 export default function Auth() {
+  // Normal auth component behavior
+  const [searchParams] = useSearchParams();
+  const [isPasswordReset, setIsPasswordReset] = useState(false);
+
   const { user, signIn, signUp } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+
   
   const [signInData, setSignInData] = useState({
     email: '',
@@ -26,8 +66,11 @@ export default function Auth() {
     name: ''
   });
 
-  // Redirect if already authenticated
+  // Auth.tsx no longer handles password reset - that's handled by /reset-password route
+
+  // Redirect if already authenticated (DEPOIS dos hooks)
   if (user) {
+    console.log('👤 User authenticated, redirecting to dashboard:', user.email);
     return <Navigate to="/" replace />;
   }
 
@@ -35,22 +78,32 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     
-    const { error } = await signIn(signInData.email, signInData.password);
-    
-    if (error) {
+    try {
+      const { error } = await signIn(signInData.email, signInData.password);
+      
+      if (error) {
+        toast({
+          title: "Erro no login",
+          description: error.message,
+          variant: "destructive"
+        });
+        setLoading(false);
+      } else {
+        toast({
+          title: "Login realizado com sucesso!",
+          description: "Bem-vindo de volta!"
+        });
+        // Não definir loading como false aqui, deixar o useAuth gerenciar
+        // o redirecionamento acontecerá automaticamente quando user for atualizado
+      }
+    } catch (err) {
       toast({
-        title: "Erro no login",
-        description: error.message,
+        title: "Erro inesperado",
+        description: "Ocorreu um erro durante o login. Tente novamente.",
         variant: "destructive"
       });
-    } else {
-      toast({
-        title: "Login realizado com sucesso!",
-        description: "Bem-vindo de volta!"
-      });
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -154,6 +207,18 @@ export default function Auth() {
                     {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Entrar
                   </Button>
+                  
+                  <div className="text-center">
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="text-sm text-muted-foreground hover:text-primary"
+                      onClick={() => setForgotPasswordOpen(true)}
+                      disabled={loading}
+                    >
+                      Esqueci minha senha
+                    </Button>
+                  </div>
                 </form>
               </TabsContent>
               
@@ -224,6 +289,12 @@ export default function Auth() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Modal de Esqueci Minha Senha */}
+      <ForgotPasswordModal 
+        open={forgotPasswordOpen}
+        onOpenChange={setForgotPasswordOpen}
+      />
     </div>
   );
 }
