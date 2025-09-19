@@ -27,6 +27,7 @@ export function KanbanBoard() {
   const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
   const [draggedIdea, setDraggedIdea] = useState<Idea | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isDragEnabled, setIsDragEnabled] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -128,11 +129,15 @@ export function KanbanBoard() {
   };
 
   const handleDragStart = (event: DragStartEvent) => {
+    if (!isDragEnabled) return;
+    
     const idea = ideas.find(i => i.id === event.active.id);
     setDraggedIdea(idea || null);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
+    if (!isDragEnabled) return;
+    
     const { active, over } = event;
     setDraggedIdea(null);
 
@@ -252,6 +257,8 @@ export function KanbanBoard() {
         setSelectedColumn={setSelectedColumn}
         onRefresh={refreshBoard}
         isRefreshing={isRefreshing}
+        isDragEnabled={isDragEnabled}
+        setIsDragEnabled={setIsDragEnabled}
       />
       
       <div className="kanban-scroll-wrapper">
@@ -276,6 +283,8 @@ export function KanbanBoard() {
                       column={column}
                       ideas={filteredIdeas.filter(idea => idea.column_id === column.id)}
                       onIdeaClick={setSelectedIdea}
+                      onUpdate={fetchData}
+                      isDragEnabled={isDragEnabled}
                     />
                   ))}
                 </SortableContext>

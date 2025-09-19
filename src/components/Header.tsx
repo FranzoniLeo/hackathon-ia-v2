@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Search, Filter, LogOut, User, RefreshCw } from 'lucide-react';
+import { Search, Filter, LogOut, User, RefreshCw, Move } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
@@ -15,6 +16,8 @@ interface HeaderProps {
   setSelectedColumn: (columnId: string | null) => void;
   onRefresh?: () => void;
   isRefreshing?: boolean;
+  isDragEnabled: boolean;
+  setIsDragEnabled: (enabled: boolean) => void;
 }
 
 export function Header({ 
@@ -24,7 +27,9 @@ export function Header({
   selectedColumn, 
   setSelectedColumn,
   onRefresh,
-  isRefreshing = false
+  isRefreshing = false,
+  isDragEnabled,
+  setIsDragEnabled
 }: HeaderProps) {
   const { signOut } = useAuth();
   const { profile } = useProfile();
@@ -94,6 +99,19 @@ export function Header({
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
+        </div>
+
+        {/* Drag Toggle */}
+        <div className="flex items-center space-x-3 px-4 py-2 bg-muted/20 rounded-lg border">
+          <Move className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm font-medium text-muted-foreground">
+            Movimentação dos cards
+          </span>
+          <Switch
+            checked={isDragEnabled}
+            onCheckedChange={setIsDragEnabled}
+            className="data-[state=checked]:bg-primary"
+          />
         </div>
 
         {/* User Actions */}

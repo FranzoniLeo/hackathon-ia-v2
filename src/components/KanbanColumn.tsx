@@ -8,9 +8,11 @@ interface KanbanColumnProps {
   column: Column;
   ideas: Idea[];
   onIdeaClick: (idea: Idea) => void;
+  onUpdate?: () => void;
+  isDragEnabled?: boolean;
 }
 
-export function KanbanColumn({ column, ideas, onIdeaClick }: KanbanColumnProps) {
+export function KanbanColumn({ column, ideas, onIdeaClick, onUpdate, isDragEnabled = true }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
   });
@@ -57,7 +59,9 @@ export function KanbanColumn({ column, ideas, onIdeaClick }: KanbanColumnProps) 
               <IdeaCard 
                 key={idea.id} 
                 idea={idea} 
-                onClick={() => onIdeaClick(idea)} 
+                onClick={() => onIdeaClick(idea)}
+                onUpdate={onUpdate}
+                isDragEnabled={isDragEnabled}
               />
             ))}
           </SortableContext>
