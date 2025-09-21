@@ -104,7 +104,7 @@ export function IdeaCard({ idea, onClick, onUpdate, isDragEnabled = true }: Idea
       onClick={onClick}
     >
       <div 
-        className="bg-card rounded-lg border border-border/20 p-4 space-y-3"
+        className="bg-card rounded-lg border border-border/20 p-4 space-y-3 group"
         style={{
           background: 'var(--gradient-card)',
           boxShadow: 'var(--shadow-card)',
@@ -120,13 +120,14 @@ export function IdeaCard({ idea, onClick, onUpdate, isDragEnabled = true }: Idea
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="h-7 w-7 p-0 opacity-60 group-hover:opacity-100 hover:bg-primary/10 transition-all duration-200 shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
                 onClick();
               }}
+              title="Editar card"
             >
-              <Edit3 className="h-3 w-3" />
+              <Edit3 className="h-3.5 w-3.5" />
             </Button>
           )}
         </div>
