@@ -3,6 +3,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Column, Idea } from '@/types';
 import { IdeaCard } from './IdeaCard';
 import { Badge } from '@/components/ui/badge';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface KanbanColumnProps {
   column: Column;
@@ -13,6 +14,7 @@ interface KanbanColumnProps {
 }
 
 export function KanbanColumn({ column, ideas, onIdeaClick, onUpdate, isDragEnabled = true }: KanbanColumnProps) {
+  const { t, translateColumnName } = useLanguage();
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
   });
@@ -37,7 +39,7 @@ export function KanbanColumn({ column, ideas, onIdeaClick, onUpdate, isDragEnabl
               className="w-3 h-3 rounded-full"
               style={{ backgroundColor: column.color }}
             />
-            <h3 className="font-semibold text-lg">{column.name}</h3>
+            <h3 className="font-semibold text-lg">{translateColumnName(column.name)}</h3>
           </div>
           <Badge variant="secondary" className="text-xs">
             {ideas.length}
@@ -68,7 +70,7 @@ export function KanbanColumn({ column, ideas, onIdeaClick, onUpdate, isDragEnabl
           
           {ideas.length === 0 && !isOver && (
             <div className="text-center py-8 text-muted-foreground text-sm">
-              Nenhuma ideia ainda
+              {t('card.no.ideas')}
             </div>
           )}
         </div>

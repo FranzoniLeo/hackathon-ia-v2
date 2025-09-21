@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Search, Filter, LogOut, User, RefreshCw, Move } from 'lucide-react';
+import { Search, Filter, LogOut, User, RefreshCw, Move, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Column } from '@/types';
 
 interface HeaderProps {
@@ -33,6 +34,7 @@ export function Header({
 }: HeaderProps) {
   const { signOut } = useAuth();
   const { profile } = useProfile();
+  const { language, setLanguage, t, translateColumnName } = useLanguage();
   const [searchFocused, setSearchFocused] = useState(false);
 
   const handleSignOut = async () => {
@@ -53,7 +55,7 @@ export function Header({
               backgroundClip: 'text'
             }}
           >
-            Kanban Board
+            {t('header.title')}
           </h1>
         </div>
 
@@ -62,7 +64,7 @@ export function Header({
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder="Buscar ideias..."
+              placeholder={t('header.search.placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
@@ -76,13 +78,13 @@ export function Header({
           <Select value={selectedColumn || 'all'} onValueChange={(value) => setSelectedColumn(value === 'all' ? null : value)}>
             <SelectTrigger className="w-40">
               <Filter className="h-4 w-4 mr-2" />
-              <SelectValue placeholder="Filtrar" />
+              <SelectValue placeholder={t('header.filter.placeholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as colunas</SelectItem>
+              <SelectItem value="all">{t('header.filter.all')}</SelectItem>
               {columns.map(column => (
                 <SelectItem key={column.id} value={column.id}>
-                  {column.name}
+                  {translateColumnName(column.name)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -95,30 +97,47 @@ export function Header({
             onClick={onRefresh}
             disabled={isRefreshing}
             className="hover:bg-primary/10 hover:text-primary hover:border-primary/20"
-            title="Atualizar dados do board"
+            title={t('header.refresh.title')}
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
         </div>
 
-        {/* Drag Toggle */}
-        <div className="flex items-center space-x-3 px-4 py-2 bg-muted/20 rounded-lg border">
-          <Move className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-muted-foreground">
-            Movimentação dos cards
-          </span>
-          <Switch
-            checked={isDragEnabled}
-            onCheckedChange={setIsDragEnabled}
-            className="data-[state=checked]:bg-primary"
-          />
+        {/* Right Side Controls */}
+        <div className="flex items-center space-x-4">
+          {/* Language Selector */}
+          <div className="flex items-center space-x-2 px-3 py-2 bg-muted/20 rounded-lg border h-10">
+            <Globe className="h-4 w-4 text-muted-foreground" />
+            <Select value={language} onValueChange={(value) => setLanguage(value as 'pt-BR' | 'en')}>
+              <SelectTrigger className="w-16 h-6 border-0 bg-transparent shadow-none p-0 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pt-BR">PT</SelectItem>
+                <SelectItem value="en">EN</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Drag Toggle */}
+          <div className="flex items-center space-x-3 px-4 py-2 bg-muted/20 rounded-lg border h-10">
+            <Move className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">
+              {t('header.drag.toggle')}
+            </span>
+            <Switch
+              checked={isDragEnabled}
+              onCheckedChange={setIsDragEnabled}
+              className="data-[state=checked]:bg-primary"
+            />
+          </div>
         </div>
 
         {/* User Actions */}
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2 text-sm text-muted-foreground">
             <User className="h-4 w-4" />
-            <span>{profile?.name || 'Usuário'}</span>
+            <span>{profile?.name || t('header.user.default')}</span>
           </div>
           
           <Button 
@@ -128,7 +147,7 @@ export function Header({
             className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20"
           >
             <LogOut className="h-4 w-4 mr-2" />
-            Sair
+            {t('header.user.logout')}
           </Button>
         </div>
       </div>

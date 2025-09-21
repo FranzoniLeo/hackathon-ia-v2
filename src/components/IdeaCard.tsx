@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { ptBR, enUS } from 'date-fns/locale';
 import { Idea } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Heart, MessageCircle, Edit3 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -20,6 +21,7 @@ interface IdeaCardProps {
 
 export function IdeaCard({ idea, onClick, onUpdate, isDragEnabled = true }: IdeaCardProps) {
   const { user } = useAuth();
+  const { language, t } = useLanguage();
   const { toast } = useToast();
   const [isLiking, setIsLiking] = useState(false);
   const {
@@ -56,8 +58,8 @@ export function IdeaCard({ idea, onClick, onUpdate, isDragEnabled = true }: Idea
         if (error) throw error;
         
         toast({
-          title: "Voto removido",
-          description: "Seu voto foi removido da ideia."
+          title: t('toast.vote.removed'),
+          description: t('toast.vote.removed')
         });
       } else {
         // Add vote
@@ -71,8 +73,8 @@ export function IdeaCard({ idea, onClick, onUpdate, isDragEnabled = true }: Idea
         if (error) throw error;
         
         toast({
-          title: "Voto adicionado",
-          description: "Você votou nesta ideia!"
+          title: t('toast.vote.added'),
+          description: t('toast.vote.added')
         });
       }
 
@@ -83,8 +85,8 @@ export function IdeaCard({ idea, onClick, onUpdate, isDragEnabled = true }: Idea
     } catch (error) {
       console.error('Error handling vote:', error);
       toast({
-        title: "Erro ao votar",
-        description: "Não foi possível processar seu voto.",
+        title: t('toast.vote.error'),
+        description: t('toast.vote.error'),
         variant: "destructive"
       });
     } finally {
@@ -125,7 +127,7 @@ export function IdeaCard({ idea, onClick, onUpdate, isDragEnabled = true }: Idea
                 e.stopPropagation();
                 onClick();
               }}
-              title="Editar card"
+              title={t('card.edit.title')}
             >
               <Edit3 className="h-3.5 w-3.5" />
             </Button>
@@ -148,7 +150,7 @@ export function IdeaCard({ idea, onClick, onUpdate, isDragEnabled = true }: Idea
           <span>
             {formatDistanceToNow(new Date(idea.created_at), { 
               addSuffix: true, 
-              locale: ptBR 
+              locale: language === 'pt-BR' ? ptBR : enUS
             })}
           </span>
         </div>
@@ -187,7 +189,7 @@ export function IdeaCard({ idea, onClick, onUpdate, isDragEnabled = true }: Idea
           
           {isCreator && (
             <Badge variant="outline" className="text-xs">
-              Criador
+              {t('card.creator')}
             </Badge>
           )}
         </div>
