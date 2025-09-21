@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Idea, Comment, Vote } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Heart, MessageCircle, Edit3, Trash2, Send, Loader2 } from 'lucide-react';
+import { Heart, MessageCircle, Edit3, Trash2, Send, Loader2, Check, X } from 'lucide-react';
 
 interface IdeaDetailModalProps {
   idea: Idea;
@@ -27,6 +27,8 @@ export function IdeaDetailModal({ idea, onClose, onUpdate }: IdeaDetailModalProp
   const [comments, setComments] = useState<Comment[]>([]);
   const [votes, setVotes] = useState<Vote[]>([]);
   const [newComment, setNewComment] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editCommentContent, setEditCommentContent] = useState('');
   const [editData, setEditData] = useState({
     title: idea.title,
     description: idea.description || ''
@@ -222,6 +224,83 @@ export function IdeaDetailModal({ idea, onClose, onUpdate }: IdeaDetailModalProp
     }
   };
 
+  const handleEditComment = (comment: Comment) => {
+    setEditingCommentId(comment.id);
+    setEditCommentContent(comment.content);
+  };
+
+  const handleSaveCommentEdit = async (commentId: string) => {
+    if (!editCommentContent.trim()) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('comments')
+        .update({
+          content: editCommentContent.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', commentId);
+
+      if (error) throw error;
+
+      setEditingCommentId(null);
+      setEditCommentContent('');
+      fetchDetails();
+      onUpdate();
+      
+      toast({
+        title: "Comentário atualizado",
+        description: "Seu comentário foi editado com sucesso!"
+      });
+    } catch (error) {
+      console.error('Error updating comment:', error);
+      toast({
+        title: "Erro ao editar",
+        description: "Não foi possível editar o comentário.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelCommentEdit = () => {
+    setEditingCommentId(null);
+    setEditCommentContent('');
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm('Tem certeza que deseja excluir este comentário?')) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('comments')
+        .delete()
+        .eq('id', commentId);
+
+      if (error) throw error;
+
+      fetchDetails();
+      onUpdate();
+      
+      toast({
+        title: "Comentário excluído",
+        description: "O comentário foi removido com sucesso!"
+      });
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o comentário.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
@@ -372,20 +451,84 @@ export function IdeaDetailModal({ idea, onClose, onUpdate }: IdeaDetailModalProp
 
             {/* Comments List */}
             <div className="space-y-3 max-h-60 overflow-y-auto">
-              {comments.map(comment => (
-                <div key={comment.id} className="bg-muted/50 rounded-lg p-3">
-                  <div className="flex items-start justify-between mb-2">
-                    <span className="text-sm font-medium">{comment.user?.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(comment.created_at), { 
-                        addSuffix: true, 
-                        locale: ptBR 
-                      })}
-                    </span>
+              {comments.map(comment => {
+                const isCommentCreator = user?.id === comment.user_id;
+                const isEditing = editingCommentId === comment.id;
+                
+                return (
+                  <div key={comment.id} className="bg-muted/50 rounded-lg p-3 group">
+                    <div className="flex items-start justify-between mb-2">
+                      <span className="text-sm font-medium">{comment.user?.name}</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(comment.created_at), { 
+                            addSuffix: true, 
+                            locale: ptBR 
+                          })}
+                        </span>
+                        {isCommentCreator && !isEditing && (
+                          <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 hover:bg-primary/10"
+                              onClick={() => handleEditComment(comment)}
+                              title="Editar comentário"
+                            >
+                              <Edit3 className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 hover:bg-destructive/10 text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteComment(comment.id)}
+                              title="Excluir comentário"
+                              disabled={loading}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {isEditing ? (
+                      <div className="space-y-2">
+                        <Textarea
+                          value={editCommentContent}
+                          onChange={(e) => setEditCommentContent(e.target.value)}
+                          rows={2}
+                          className="text-sm"
+                        />
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCancelCommentEdit}
+                            disabled={loading}
+                            className="h-7 px-2"
+                          >
+                            <X className="h-3 w-3 mr-1" />
+                            Cancelar
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSaveCommentEdit(comment.id)}
+                            disabled={loading || !editCommentContent.trim()}
+                            className="h-7 px-2"
+                          >
+                            {loading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Check className="h-3 w-3 mr-1" />}
+                            Salvar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
+                    )}
                   </div>
-                  <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
-                </div>
-              ))}
+                );
+              })}
               
               {comments.length === 0 && (
                 <div className="text-center py-4 text-muted-foreground text-sm">
