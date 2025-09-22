@@ -31,7 +31,13 @@ export function KanbanBoard() {
 
   useEffect(() => {
     fetchData();
-    setupRealtime();
+    const cleanup = setupRealtime();
+    
+    return () => {
+      if (cleanup) {
+        cleanup();
+      }
+    };
   }, []);
 
   const fetchData = async (isRefresh = false) => {
@@ -98,32 +104,40 @@ export function KanbanBoard() {
   };
 
   const setupRealtime = () => {
+    console.log('🔗 Setting up realtime connection...');
+    
     const channel = supabase
       .channel('kanban-changes')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'ideas'
-      }, () => {
+      }, (payload) => {
+        console.log('📝 Ideas table changed:', payload);
         fetchData();
       })
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'votes'
-      }, () => {
+      }, (payload) => {
+        console.log('❤️ Votes table changed:', payload);
         fetchData();
       })
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'comments'
-      }, () => {
+      }, (payload) => {
+        console.log('💬 Comments table changed:', payload);
         fetchData();
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('🔄 Realtime subscription status:', status);
+      });
 
     return () => {
+      console.log('🔌 Cleaning up realtime connection...');
       supabase.removeChannel(channel);
     };
   };
@@ -215,12 +229,32 @@ export function KanbanBoard() {
       }
 
       console.log('Idea moved successfully');
+      
+      // Update local state immediately for better UX
+      setIdeas(prevIdeas => 
+        prevIdeas.map(idea => 
+          idea.id === ideaId 
+            ? { ...idea, column_id: targetColumnId, position_in_column: newPosition }
+            : idea
+        )
+      );
+      
       toast({
         title: "Ideia movida",
         description: "A ideia foi movida com sucesso!"
       });
     } catch (error) {
       console.error('Error moving idea:', error);
+      
+      // Revert local state on error
+      setIdeas(prevIdeas => 
+        prevIdeas.map(idea => 
+          idea.id === ideaId 
+            ? { ...idea, column_id: idea.column_id, position_in_column: idea.position_in_column }
+            : idea
+        )
+      );
+      
       toast({
         title: "Erro ao mover ideia",
         description: "Não foi possível mover a ideia. Tente novamente.",
